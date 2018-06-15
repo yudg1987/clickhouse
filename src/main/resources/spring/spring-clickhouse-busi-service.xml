@@ -1,0 +1,21 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:hsf="http://www.taobao.com/hsf"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd ">
+
+	<description>clickhouse service配置</description>
+
+	<!-- 根据tableId获取数据库表字段类型 -->
+	<bean id="iClickHouseBusiService" class="com.ohaotian.clickhouse.service.impl.ClickHouseBusiServiceImpl">
+		<property name="checkResultMapper" ref="checkResultMapper"></property>
+		<property name="clickHouseConfig" ref="clickHouseConfig"></property>
+	</bean>
+
+	<!-- 将配置文件注入到clickhouse配置的类中 -->
+	<bean id="clickHouseConfig" class="com.ohaotian.clickhouse.config.ClickHouseConfig">
+		<property name="properties" ref="propertyConfigurer" />
+	</bean>
+</beans>
