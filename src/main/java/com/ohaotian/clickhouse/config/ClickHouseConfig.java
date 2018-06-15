@@ -60,7 +60,7 @@ public class ClickHouseConfig {
      */
     private static int maxCompressBufferSize = (int) ClickHouseConnectionSettings.MAX_COMPRESS_BUFFER_SIZE.getDefaultValue();
 
-    private static ClickHouseProperties clickHouseProperties() throws Exception {
+    private ClickHouseProperties clickHouseProperties() {
         final ClickHouseProperties clickHouseProperties = new ClickHouseProperties();
         dataSourceUrl = properties.getProperty("com.ohaotian.clickhouse.dataSourceUrl");
         connectionTimeout = Integer.valueOf(properties.getProperty("com.ohaotian.clickhouse.connectionTimeout"));
@@ -84,9 +84,6 @@ public class ClickHouseConfig {
         return clickHouseProperties;
     }
 
-    /*
-     * public ClickHouseDataSource clickHouseDataSource() throws Exception { return new ClickHouseDataSource(dataSourceUrl, clickHouseProperties()); }
-     */
 
     /**
      * 获取连接
@@ -94,7 +91,7 @@ public class ClickHouseConfig {
      * @return
      * @throws Exception
      */
-    public static ClickHouseConnection clickHouseConnection() throws Exception {
+    public ClickHouseConnection clickHouseConnection() throws Exception {
         ClickHouseProperties properties = clickHouseProperties();
         ClickHouseDataSource clickHouseDataSource = new ClickHouseDataSource(dataSourceUrl, properties);
         return clickHouseDataSource.getConnection();
@@ -107,7 +104,7 @@ public class ClickHouseConfig {
      * @param rs
      * @param connection
      */
-    public static void closeConnection(Statement stmt, ResultSet rs, Connection connection) throws SQLException {
+    public void closeConnection(Statement stmt, ResultSet rs, Connection connection) throws SQLException {
         if (rs != null && !rs.isClosed()) {
             rs.close();
         }

@@ -241,8 +241,9 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
         // QueryCheckResultRspBO rsp=impl.query(queryCheckResultReqBO);
         // System.out.println("rsp="+rsp);
 
-        StringBuilder sb = new StringBuilder("INSERT INTO ").append("t_order_source");
+        final StringBuilder sb = new StringBuilder("INSERT INTO ").append("t_order_source");
         sb.append(" (order_id, price, num, name) VALUES (?, ?, ?, ?)");
+
 
         List<ColumnVo> list = new ArrayList<>();
         ColumnVo columnVo = new ColumnVo();

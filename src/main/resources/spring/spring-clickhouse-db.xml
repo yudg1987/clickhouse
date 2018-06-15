@@ -1,34 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
-	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:p="http://www.springframework.org/schema/p"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans
-    http://www.springframework.org/schema/beans/spring-beans.xsd
-    http://www.springframework.org/schema/tx
-    http://www.springframework.org/schema/tx/spring-tx.xsd
-    http://www.springframework.org/schema/aop
-    http://www.springframework.org/schema/aop/spring-aop.xsd">
-    
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd">
+
     <bean id="clickHouseSource" class="com.alibaba.druid.pool.DruidDataSource"
-		init-method="init" destroy-method="close">
-		<property name="driverClassName" value="ru.yandex.clickhouse.ClickHouseDriver" />
-		<!-- 基本属性 url、user、password -->
-		<property name="url" value="${com.ohaotian.clickhouse.dataSourceUrl}" />
-		<property name="username" value="${com.ohaotian.clickhouse.user}" />
-		<property name="password" value="${com.ohaotian.clickhouse.password}" />
-		<!-- maxWait 获取连接等待超时的时间 -->
-		<property name="maxWait" value="${com.ohaotian.clickhouse.connectionTimeout}" />
-	</bean>
-	
-	<bean id="sqlSessionFactoryClickHouse" class="org.mybatis.spring.SqlSessionFactoryBean"
-		p:dataSource-ref="clickHouseSource" p:configLocation="classpath:mybatis-config-clickhouse.xml"
-		p:mapperLocations="classpath*:com/ohaotian/clickhouse/mapper/*.xml" />
-	
-	<bean id="checkResultMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
-		<property name="sqlSessionFactory" ref="sqlSessionFactoryClickHouse" />
-		<property name="mapperInterface"
-			value="com.ohaotian.clickhouse.dao.CheckResultMapper" />
-	</bean>
-	
-	
+          init-method="init" destroy-method="close">
+        <property name="driverClassName" value="ru.yandex.clickhouse.ClickHouseDriver"/>
+        <!-- 基本属性 url、user、password -->
+        <property name="url" value="${com.ohaotian.clickhouse.dataSourceUrl}"/>
+        <property name="username" value="${com.ohaotian.clickhouse.user}"/>
+        <property name="password" value="${com.ohaotian.clickhouse.password}"/>
+        <!-- maxWait 获取连接等待超时的时间 -->
+        <property name="maxWait" value="${com.ohaotian.clickhouse.connectionTimeout}"/>
+    </bean>
+
+    <bean id="sqlSessionFactoryClickHouse" class="org.mybatis.spring.SqlSessionFactoryBean"
+          p:dataSource-ref="clickHouseSource" p:configLocation="classpath:mybatis-config-clickhouse.xml"
+          p:mapperLocations="classpath*:com/ohaotian/clickhouse/mapper/*.xml"/>
+
+    <bean id="checkResultMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="sqlSessionFactory" ref="sqlSessionFactoryClickHouse"/>
+        <property name="mapperInterface"
+                  value="com.ohaotian.clickhouse.dao.CheckResultMapper"/>
+    </bean>
+
+
 </beans>
