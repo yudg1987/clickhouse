@@ -19,11 +19,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <jdk.version>1.8</jdk.version>
     </properties>
-
-
-
-
-
+    <distributionManagement>
+        <repository>
+            <id>releases</id>
+            <name>Nexus Release Repository</name>
+            <url>http://10.124.163.72:8081/nexus/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>Nexus Snapshot Repository</name>
+            <url>http://10.124.163.72:8081/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
     <dependencies>
         <dependency>
             <groupId>com.ohaotian.base</groupId>
@@ -110,18 +117,4 @@
             </resource>
         </resources>
     </build>
-
-    <distributionManagement>
-        <repository>
-            <id>releases</id>
-            <name>Nexus Release Repository</name>
-            <url>http://10.124.163.72:8081/nexus/content/repositories/releases/</url>
-        </repository>
-        <snapshotRepository>
-            <id>snapshots</id>
-            <name>Nexus Snapshot Repository</name>
-            <url>http://10.124.163.72:8081/nexus/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
 </project>
