@@ -9,5 +9,6 @@ import com.ohaotian.clickhouse.bo.QueryCheckResultReqBO;
 public interface CheckResultMapper {
 
 	List<Map<String, Object>> selectSQLByPage(Page<QueryCheckResultReqBO> page, Map map);
+	List<Map<String, Object>> selectTableStruct(Map map);
 
 }

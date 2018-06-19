@@ -1,16 +1,12 @@
 package com.ohaotian.clickhouse.service.impl;
 
-import java.sql.DatabaseMetaData;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -60,99 +56,98 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
         if (null == targetView || targetView.isEmpty()) {
             throw new IllegalArgumentException("目标视图或表名不能为空");
         }
+        List<TargetViewBO> targetViewBOs = new ArrayList<TargetViewBO>();
+        Map<String, String> tableViewMap = new HashMap<>();
+        tableViewMap.put("sql", "DESC " + targetView);
+        List<Map<String, Object>> tableStructs = checkResultMapper.selectTableStruct(tableViewMap);
+        for (Map<String, Object> viewMap : tableStructs) {
+            TargetViewBO bo = new TargetViewBO();
+            bo.setColumnName(String.valueOf(viewMap.get("name")));
+            bo.setDataType(String.valueOf(viewMap.get("type")));
+            targetViewBOs.add(bo);
 
-        ClickHouseConnection clickHouseConnection = clickHouseConfig.clickHouseConnection();
-
-        DatabaseMetaData dbmd = clickHouseConnection.getMetaData();
-
-        String defalutCatalog = clickHouseConnection.getCatalog();
-
-        String defaultSchema = clickHouseConnection.getSchema();
-
-        ResultSet columnsResultSet = dbmd.getColumns(defalutCatalog, defaultSchema, targetView, "%");
-
-        ResultSet resultSet = clickHouseConnection.createStatement().executeQuery(checkSql);
+        }
+        Map<String, String> sqlMap = new HashMap<>();
+        sqlMap.put("sql", checkSql);
+        List<Map<String, Object>> queryResults = checkResultMapper.selectTableStruct(sqlMap);
 
         StringBuilder colomnSQL = new StringBuilder("INSERT INTO ").append(targetView).append(" (");
-        StringBuilder valuesSQL = new StringBuilder(" VALUES (");
-
-        int columnCount = 0;
-        List<TargetViewBO> targetViewBOs = new ArrayList<TargetViewBO>();
-        while (columnsResultSet.next()) {
-            columnCount++;
-            TargetViewBO bo = new TargetViewBO();
-            bo.setColumnName(columnsResultSet.getString("COLUMN_NAME"));
-            bo.setDataType(columnsResultSet.getInt("DATA_TYPE"));
-            bo.setNullable(columnsResultSet.getBoolean("NULLABLE"));
-            targetViewBOs.add(bo);
-        }
-        columnsResultSet.close();
-        log.debug("columnCount=" + columnCount);
+        int columnCount = targetViewBOs.size();
+        log.debug("columnCount=" + targetViewBOs.size());
         log.debug("targetViewBOs=" + targetViewBOs);
         int pos = 0;
         for (int i = 0; i < columnCount; i++) {
             String columnName = targetViewBOs.get(i).getColumnName();
             if (pos == columnCount - 1) {
                 colomnSQL.append(columnName).append(")");
-                valuesSQL.append("? ) ");
             } else {
                 colomnSQL.append(columnName).append(",");
-                valuesSQL.append("? , ");
             }
             pos++;
         }
-        String insertSQL = colomnSQL.toString() + valuesSQL.toString();
-        log.debug("sql=" + insertSQL);
+        colomnSQL.append("VALUES");
 
-        PreparedStatement preparedStatement = clickHouseConnection.prepareStatement(insertSQL);
-
-        while (resultSet.next()) {
+        //PreparedStatement preparedStatement = clickHouseConnection.prepareStatement(insertSQL);
+        StringBuilder valueSQL = new StringBuilder();
+        SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat myDateFmt = new SimpleDateFormat("yyyy-MM-dd");
+        for (Map<String, Object> resultMap : queryResults) {
+            StringBuilder valueSQLTemp = new StringBuilder();
+            if (valueSQL.length() > 0) {
+                valueSQLTemp.append(",(");
+            } else {
+                valueSQLTemp.append("(");
+            }
+            pos = 0;
             for (int i = 0; i < columnCount; i++) {
                 TargetViewBO bo = targetViewBOs.get(i);
                 String columnName = bo.getColumnName();
                 Object value;
-                value = null;
-                Integer dataType = bo.getDataType();
+                String dataType = bo.getDataType();
                 try {
-                    value = resultSet.getObject(columnName);
+                    value = resultMap.get(columnName);
                 } catch (Exception e) {
-                    preparedStatement.setObject(i + 1, null, Types.VARCHAR);
-                    if (dataType == 91) {// DATE类型
-                        preparedStatement.setDate(i + 1, new Date(0L));
-                    } else if (dataType == 92 || dataType == 93) {// timestamp datetime
-                        preparedStatement.setTimestamp(i + 1, new Timestamp(0L));
-                    } else if (dataType == -5) {// Int64
-                        preparedStatement.setObject(i + 1, 0, Types.INTEGER);
+                    if (dataType.indexOf("Int") != -1) {
+                        valueSQLTemp.append("0");
                     } else {
-                        preparedStatement.setObject(i + 1, value, dataType);
+                        valueSQLTemp.append("NULL");
                     }
                     continue;
                 }
-                if (value == null) {
-                    if (dataType == 91) {// DATE类型
-                        preparedStatement.setDate(i + 1, new Date(0L));
-                    } else if (dataType == 92 || dataType == 93) {// timestamp datetime
-                        // preparedStatement.setTimestamp(i + 1, new Timestamp(0L));
-                        preparedStatement.setObject(i + 1, null, Types.TIMESTAMP);
-                    } else if (dataType == -5) {// Int64
-                        preparedStatement.setObject(i + 1, 0, Types.INTEGER);
+                if (value == null || "".equals(value)) {
+                    if (dataType.indexOf("Int") != -1) {
+                        valueSQLTemp.append("0");
                     } else {
-                        preparedStatement.setObject(i + 1, value, dataType);
+                        valueSQLTemp.append("NULL");
                     }
                 } else {
-                    preparedStatement.setObject(i + 1, value, dataType);
+                    if (dataType.indexOf("DateTime") != -1 || dataType.indexOf("TimeStamp") != -1) {
+                        valueSQLTemp.append("toDateTime('" + myFmt.format(value) + "')");
+                    } else if (dataType.indexOf("Date") != -1) {
+                        valueSQLTemp.append("toDate('" + myDateFmt.format(value) + "')");
+                    } else if (dataType.indexOf("String") != -1) {
+                        valueSQLTemp.append("'" + value + "'");
+                    } else {
+                        valueSQLTemp.append(value);
+                    }
                 }
-
+                if (pos < columnCount - 1) {
+                    valueSQLTemp.append(",");
+                }
+                pos++;
             }
-            preparedStatement.addBatch();
+            valueSQLTemp.append(")");
+            valueSQL.append(valueSQLTemp);
         }
-        preparedStatement.executeBatch();
-        preparedStatement.close();
-        resultSet.close();
-        clickHouseConnection.close();
+        String insertSQL = colomnSQL.append(valueSQL).toString();
+        log.debug("insertSQL=" + insertSQL);
+        Map<String, String> excuteSQLMap = new HashMap<>();
+        excuteSQLMap.put("sql", insertSQL);
+        checkResultMapper.selectTableStruct(excuteSQLMap);
         ExecCompareTaskRspBO execCompareTaskRspBO = new ExecCompareTaskRspBO();
         return execCompareTaskRspBO;
     }
+
 
     /**
      * <br>
