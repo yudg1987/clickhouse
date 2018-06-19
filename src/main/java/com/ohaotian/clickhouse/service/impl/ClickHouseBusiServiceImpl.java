@@ -43,7 +43,6 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
     private CheckResultMapper checkResultMapper;
     private ClickHouseConfig clickHouseConfig;
 
-
     @Override
     public ExecCompareTaskRspBO excuteCompare(ExecCompareTaskReqBO execCompareTaskReqBO) throws Exception {
 
@@ -143,9 +142,10 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
         excuteSQLMap.put("sql", insertSQL);
         checkResultMapper.selectTableStruct(excuteSQLMap);
         ExecCompareTaskRspBO execCompareTaskRspBO = new ExecCompareTaskRspBO();
+        execCompareTaskRspBO.setRespCode("0000");
+        execCompareTaskRspBO.setRespDesc("成功!");
         return execCompareTaskRspBO;
     }
-
 
     /**
      * <br>
@@ -236,7 +236,6 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
 
         final StringBuilder sb = new StringBuilder("INSERT INTO ").append("t_order_source");
         sb.append(" (order_id, price, num, name) VALUES (?, ?, ?, ?)");
-
 
         List<ColumnVo> list = new ArrayList<>();
         ColumnVo columnVo = new ColumnVo();
