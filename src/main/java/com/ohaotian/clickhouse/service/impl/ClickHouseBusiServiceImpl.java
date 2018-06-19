@@ -86,8 +86,6 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
             pos++;
         }
         colomnSQL.append("VALUES");
-
-        //PreparedStatement preparedStatement = clickHouseConnection.prepareStatement(insertSQL);
         StringBuilder valueSQL = new StringBuilder();
         SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         SimpleDateFormat myDateFmt = new SimpleDateFormat("yyyy-MM-dd");
