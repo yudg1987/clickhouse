@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -66,21 +67,14 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
         Map<String, String> sqlMap = new HashMap<>();
         sqlMap.put("sql", checkSql);
         List<Map<String, Object>> queryResults = checkResultMapper.selectTableStruct(sqlMap);
-        StringBuilder colomnSQL = new StringBuilder("INSERT INTO ").append(targetView).append(" (");
+        //StringBuilder colomnSQL = new StringBuilder("INSERT INTO ").append(targetView).append(" (");
+        StringBuilder colomnSQL = new StringBuilder("INSERT INTO ").append(targetView);
         int columnCount = targetViewBOs.size();
         log.debug("columnCount=" + targetViewBOs.size());
         log.debug("targetViewBOs=" + targetViewBOs);
         int pos = 0;
-        for (int i = 0; i < columnCount; i++) {
-            String columnName = targetViewBOs.get(i).getColumnName();
-            if (pos == columnCount - 1) {
-                colomnSQL.append(columnName).append(")");
-            } else {
-                colomnSQL.append(columnName).append(",");
-            }
-            pos++;
-        }
-        colomnSQL.append("VALUES");
+        String columnNames=targetViewBOs.stream().map(TargetViewBO::getColumnName).collect(Collectors.joining(","));
+        colomnSQL.append("(").append(columnNames).append(")").append("VALUES");
         StringBuilder valueSQL = new StringBuilder();
         SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         SimpleDateFormat myDateFmt = new SimpleDateFormat("yyyy-MM-dd");
