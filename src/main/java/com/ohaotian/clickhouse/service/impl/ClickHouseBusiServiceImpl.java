@@ -45,12 +45,10 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
 
     @Override
     public ExecCompareTaskRspBO excuteCompare(ExecCompareTaskReqBO execCompareTaskReqBO) throws Exception {
-
         String checkSql = execCompareTaskReqBO.getCheckSql();
         if (null == checkSql || checkSql.isEmpty()) {
             throw new IllegalArgumentException("比对sql不能为空");
         }
-
         String targetView = execCompareTaskReqBO.getTargetView();
         if (null == targetView || targetView.isEmpty()) {
             throw new IllegalArgumentException("目标视图或表名不能为空");
@@ -64,12 +62,10 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
             bo.setColumnName(String.valueOf(viewMap.get("name")));
             bo.setDataType(String.valueOf(viewMap.get("type")));
             targetViewBOs.add(bo);
-
         }
         Map<String, String> sqlMap = new HashMap<>();
         sqlMap.put("sql", checkSql);
         List<Map<String, Object>> queryResults = checkResultMapper.selectTableStruct(sqlMap);
-
         StringBuilder colomnSQL = new StringBuilder("INSERT INTO ").append(targetView).append(" (");
         int columnCount = targetViewBOs.size();
         log.debug("columnCount=" + targetViewBOs.size());
@@ -268,77 +264,6 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
         impl.batchInsert(sb.toString(), values);
     }
 
-    @Override
-    public QueryCheckResultRspBO query(QueryCheckResultReqBO queryCheckResultReqBO) throws Exception {
-        QueryCheckResultRspBO rsp = new QueryCheckResultRspBO();
-        ClickHouseConnection clickHouseConnection = clickHouseConfig.clickHouseConnection();
-        MySql5Dialect dialect = new MySql5Dialect();
-        String querySQL = queryCheckResultReqBO.getSql();
-        if (null == querySQL || querySQL.isEmpty()) {
-            throw new IllegalArgumentException("查询比对结果sql不能为空");
-        }
-        querySQL = querySQL + intallWhereCondition(queryCheckResultReqBO);
-        int offset = queryCheckResultReqBO.getOffset();
-        int limit = queryCheckResultReqBO.getLimit();
-        String countSQL = dialect.getCountString(querySQL);
-        log.debug("countSQL=" + countSQL);
-        ResultSet rs = clickHouseConnection.createStatement().executeQuery(countSQL);
-        int total = 0;
-        while (rs.next()) {
-            total = rs.getInt(1);
-        }
-        rs.close();
-        rsp.setRecordsTotal(total);
-
-        log.debug("total=" + total);
-        String limitSQL = null;
-        if (limit > 0) {
-            limitSQL = dialect.getLimitString(querySQL, offset, limit);
-        } else {// 不分页情况
-            limitSQL = querySQL;
-            limit = total;
-        }
-        int mod = total % limit;
-        int pageTotal = total / limit;
-        rsp.setTotal(mod > 0 ? (pageTotal + 1) : pageTotal);
-
-        log.debug("limitSQL=" + limitSQL);
-
-        ClickHouseResultSet clickHouseResultSet = (ClickHouseResultSet) clickHouseConnection.createStatement().executeQuery(limitSQL);
-        String columns[] = clickHouseResultSet.getColumnNames();
-        List<Map<String, Object>> datas = new ArrayList<>();
-        while (clickHouseResultSet.next()) {
-            Map<String, Object> map = new HashMap<>();
-            for (String column : columns) {
-                map.put(column, clickHouseResultSet.getObject(column));
-            }
-            datas.add(map);
-        }
-        rsp.setData(datas);
-        clickHouseResultSet.close();
-        clickHouseConnection.close();
-        return rsp;
-    }
-
-    private StringBuilder intallWhereCondition(QueryCheckResultReqBO queryCheckResultReqBO) {
-        StringBuilder whereSQL = new StringBuilder(" where 1=1 ");
-        List<ColumnVo> whereConditionList = queryCheckResultReqBO.getWhereConditionList();
-        if (whereConditionList != null && whereConditionList.size() > 0) {
-            for (ColumnVo vo : whereConditionList) {
-                int sqlType = vo.getSqlType();
-                whereSQL.append(" and ").append(vo.getName() + " ").append(vo.getJudgeSymbol() + " ");
-                if (sqlType == -5) {
-                    whereSQL.append(vo.getValue());
-                } else {
-                    whereSQL.append("'" + vo.getValue() + "'");
-                }
-
-            }
-        }
-
-        return whereSQL;
-
-    }
 
     @Override
     public QueryCheckResultRspBO selectSQLByPage(QueryCheckResultReqBO queryCheckResultReqBO) {

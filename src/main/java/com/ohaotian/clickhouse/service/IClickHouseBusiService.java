@@ -60,8 +60,5 @@ public interface IClickHouseBusiService {
      * @autho yudg
      * @time 2018年6月7日 下午3:09:33
      */
-    QueryCheckResultRspBO query(QueryCheckResultReqBO queryCheckResultReqBO) throws Exception;
-
-
     QueryCheckResultRspBO selectSQLByPage(QueryCheckResultReqBO queryCheckResultReqBO);
 }
