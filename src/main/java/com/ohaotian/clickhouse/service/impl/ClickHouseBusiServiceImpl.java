@@ -2,7 +2,6 @@ package com.ohaotian.clickhouse.service.impl;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
@@ -13,7 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ohaotian.base.db.MySql5Dialect;
 import com.ohaotian.base.db.Page;
 import com.ohaotian.clickhouse.bo.ExecCompareTaskReqBO;
 import com.ohaotian.clickhouse.bo.ExecCompareTaskRspBO;
@@ -26,7 +24,6 @@ import com.ohaotian.clickhouse.service.IClickHouseBusiService;
 import com.ohaotian.clickhouse.vo.ColumnVo;
 
 import ru.yandex.clickhouse.ClickHouseConnection;
-import ru.yandex.clickhouse.response.ClickHouseResultSet;
 
 /**
  * <br>
@@ -73,7 +70,7 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
         log.debug("columnCount=" + targetViewBOs.size());
         log.debug("targetViewBOs=" + targetViewBOs);
         int pos = 0;
-        String columnNames=targetViewBOs.stream().map(TargetViewBO::getColumnName).collect(Collectors.joining(","));
+        String columnNames = targetViewBOs.stream().map(TargetViewBO::getColumnName).collect(Collectors.joining(","));
         colomnSQL.append("(").append(columnNames).append(")").append("VALUES");
         StringBuilder valueSQL = new StringBuilder();
         SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
