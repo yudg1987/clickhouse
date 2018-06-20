@@ -43,95 +43,91 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
 
 	@Override
 	public ExecCompareTaskRspBO excuteCompare(ExecCompareTaskReqBO execCompareTaskReqBO) throws Exception {
-		String checkSql = execCompareTaskReqBO.getCheckSql();
-		if (null == checkSql || checkSql.isEmpty()) {
-			throw new IllegalArgumentException("比对sql不能为空");
-		}
-		String targetView = execCompareTaskReqBO.getTargetView();
-		if (null == targetView || targetView.isEmpty()) {
-			throw new IllegalArgumentException("目标视图或表名不能为空");
-		}
-		List<TargetViewBO> targetViewBOs = new ArrayList<TargetViewBO>();
-		Map<String, String> tableViewMap = new HashMap<>();
-		tableViewMap.put("sql", "DESC " + targetView);
-		List<Map<String, Object>> tableStructs = checkResultMapper.selectTableStruct(tableViewMap);
-		for (Map<String, Object> viewMap : tableStructs) {
-			TargetViewBO bo = new TargetViewBO();
-			bo.setColumnName(String.valueOf(viewMap.get("name")));
-			bo.setDataType(String.valueOf(viewMap.get("type")));
-			targetViewBOs.add(bo);
-		}
-		Map<String, String> sqlMap = new HashMap<>();
-		sqlMap.put("sql", checkSql);
-		List<Map<String, Object>> queryResults = checkResultMapper.selectTableStruct(sqlMap);
-		StringBuilder colomnSQL = new StringBuilder("INSERT INTO ").append(targetView);
-		log.debug("columnCount=" + targetViewBOs.size());
-		log.debug("targetViewBOs=" + targetViewBOs);
-		String columnNames = targetViewBOs.stream().map(TargetViewBO::getColumnName).collect(Collectors.joining(","));
-		colomnSQL.append("(").append(columnNames).append(")").append("VALUES");
-		StringBuilder valueSQL = new StringBuilder();
-		for (Map<String, Object> resultMap : queryResults) {
-			StringBuilder valueSQLTemp = new StringBuilder();
-			intallSB(resultMap, targetViewBOs, valueSQL, valueSQLTemp);
-		}
-		String insertSQL = colomnSQL.append(valueSQL).toString();
-		log.debug("insertSQL=" + insertSQL);
-		Map<String, String> excuteSQLMap = new HashMap<>();
-		excuteSQLMap.put("sql", insertSQL);
-		checkResultMapper.selectTableStruct(excuteSQLMap);
 		ExecCompareTaskRspBO execCompareTaskRspBO = new ExecCompareTaskRspBO();
 		execCompareTaskRspBO.setRespCode("0000");
 		execCompareTaskRspBO.setRespDesc("成功!");
+		try {
+			String checkSql = execCompareTaskReqBO.getCheckSql();
+			if (null == checkSql || checkSql.isEmpty()) {
+				throw new IllegalArgumentException("比对sql不能为空");
+			}
+			String targetView = execCompareTaskReqBO.getTargetView();
+			if (null == targetView || targetView.isEmpty()) {
+				throw new IllegalArgumentException("目标视图或表名不能为空");
+			}
+			List<TargetViewBO> targetViewBOs = new ArrayList<TargetViewBO>();
+			Map<String, String> tableViewMap = new HashMap<>();
+			tableViewMap.put("sql", "DESC " + targetView);
+			List<Map<String, Object>> tableStructs = checkResultMapper.selectTableStruct(tableViewMap);
+			TargetViewBO bo = null;
+			for (Map<String, Object> viewMap : tableStructs) {
+				bo = new TargetViewBO();
+				bo.setColumnName(String.valueOf(viewMap.get("name")));
+				bo.setDataType(String.valueOf(viewMap.get("type")));
+				targetViewBOs.add(bo);
+			}
+			Map<String, String> sqlMap = new HashMap<>();
+			sqlMap.put("sql", checkSql);
+			List<Map<String, Object>> queryResults = checkResultMapper.selectTableStruct(sqlMap);
+			StringBuilder colomnSQL = new StringBuilder("INSERT INTO ").append(targetView);
+			log.debug("columnCount=" + targetViewBOs.size());
+			log.debug("targetViewBOs=" + targetViewBOs);
+			String columnNames = targetViewBOs.stream().map(TargetViewBO::getColumnName).collect(Collectors.joining(","));
+			colomnSQL.append("(").append(columnNames).append(")").append("VALUES");
+			StringBuilder valueSQL = new StringBuilder();
+			StringBuilder valueSQLTemp = null;
+			for (Map<String, Object> resultMap : queryResults) {
+				valueSQLTemp = new StringBuilder();
+				intallSB(resultMap, targetViewBOs, valueSQL, valueSQLTemp);
+			}
+			String insertSQL = colomnSQL.append(valueSQL).toString();
+			log.debug("insertSQL=" + insertSQL);
+			Map<String, String> excuteSQLMap = new HashMap<>();
+			excuteSQLMap.put("sql", insertSQL);
+			checkResultMapper.selectTableStruct(excuteSQLMap);
+		}
+		catch (Exception e) {
+			execCompareTaskRspBO.setRespCode("8888");
+			execCompareTaskRspBO.setRespDesc(e.getMessage());
+		}
 		return execCompareTaskRspBO;
 	}
 
 	public void intallSB(Map<String, Object> resultMap, List<TargetViewBO> targetViewBOs, StringBuilder valueSQL, StringBuilder valueSQLTemp) {
 		int columnCount = targetViewBOs.size();
-		if (valueSQL.length() > 0) {
-			valueSQLTemp.append(",(");
-		}
-		else {
-			valueSQLTemp.append("(");
-		}
+		valueSQLTemp.append(valueSQL.length() > 0 ? (",(") : ("("));
 		int pos = 0;
+		TargetViewBO bo = null;
+		String columnName = null;
+		Object value;
+		String dataType;
+		int nullableIndex = -1;
+		int intIndex = -1;
+		boolean includeKey = false;
 		for (int i = 0; i < columnCount; i++) {
-			TargetViewBO bo = targetViewBOs.get(i);
-			String columnName = bo.getColumnName();
-			Object value;
-			String dataType = bo.getDataType();
-			boolean includeKey = false;
+			bo = targetViewBOs.get(i);
+			columnName = bo.getColumnName();
+			dataType = bo.getDataType();
+			nullableIndex = dataType.indexOf("Nullable");
+			intIndex = dataType.indexOf("Int");
 			includeKey = resultMap.containsKey(columnName);
 			if (includeKey) {
 				value = resultMap.get(columnName);
 				if (value == null || "".equals(value)) {
-					if (dataType.indexOf("Int") != -1) {
-						valueSQLTemp.append("0");
-					}
-					else {
-						valueSQLTemp.append("NULL");
-					}
+					valueSQLTemp.append(nullableIndex != -1 ? "NULL" : intIndex != -1 ? "0" : "NULL");
 				}
 				else {
-					if (dataType.indexOf("DateTime") != -1 || dataType.indexOf("TimeStamp") != -1) {
-						valueSQLTemp.append("toDateTime('" + myFmt.format(value) + "')");
-					}
-					else if (dataType.indexOf("Date") != -1) {
-						valueSQLTemp.append("toDate('" + myDateFmt.format(value) + "')");
-					}
-					else if (dataType.indexOf("String") != -1) {
-						valueSQLTemp.append("'" + value + "'");
-					}
-					else {
-						valueSQLTemp.append(value);
-					}
+					String temp = (dataType.indexOf("DateTime") != -1 || dataType.indexOf("TimeStamp") != -1) ? ("toDateTime('" + myFmt.format(value) + "')")
+					        : (dataType.indexOf("Date") != -1) ? ("toDate('" + myDateFmt.format(value) + "')") : (dataType.indexOf("String") != -1) ? ("'" + value + "'") : String.valueOf(value);
+					valueSQLTemp.append(temp);
 				}
 			}
 			else {
-				if (dataType.indexOf("Int") != -1) {
-					valueSQLTemp.append("0");
+				if (nullableIndex != -1) {
+					valueSQLTemp.append("NULL");
 				}
 				else {
-					valueSQLTemp.append("NULL");
+					throw new IllegalArgumentException("目标视图中的列" + columnName + "类型为" + dataType + "且不能为空,执行SQL中无此字段查询结果，请检查您的checkSql");
 				}
 			}
 			if (pos < columnCount - 1) {
