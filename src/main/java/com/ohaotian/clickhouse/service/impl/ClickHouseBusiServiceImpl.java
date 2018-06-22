@@ -12,10 +12,11 @@ import com.ohaotian.clickhouse.bo.ExecCompareTaskRspBO;
 import com.ohaotian.clickhouse.bo.QueryCheckResultReqBO;
 import com.ohaotian.clickhouse.bo.QueryCheckResultRspBO;
 import com.ohaotian.clickhouse.bo.TargetViewBO;
-import com.ohaotian.clickhouse.config.ClickHouseConfig;
 import com.ohaotian.clickhouse.dao.CheckResultMapper;
 import com.ohaotian.clickhouse.service.IClickHouseBusiService;
 import com.ohaotian.clickhouse.vo.ColumnVo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * <br>
  * 标题:clickHouse接口实现类 <br>
@@ -27,12 +28,11 @@ import com.ohaotian.clickhouse.vo.ColumnVo;
  */
 public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
 
-    //private static final Logger log = LoggerFactory.getLogger(ClickHouseBusiServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(ClickHouseBusiServiceImpl.class);
     private static final SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     private static final SimpleDateFormat myDateFmt = new SimpleDateFormat("yyyy-MM-dd");
 
     private CheckResultMapper checkResultMapper;
-    private ClickHouseConfig clickHouseConfig;
 
     @Override
     public ExecCompareTaskRspBO excuteCompare(ExecCompareTaskReqBO execCompareTaskReqBO) throws Exception {
@@ -63,8 +63,8 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
             sqlMap.put("sql", checkSql);
             List<Map<String, Object>> queryResults = checkResultMapper.selectTableStruct(sqlMap);
             StringBuilder colomnSQL = new StringBuilder("INSERT INTO ").append(targetView);
-            /*log.debug("columnCount=" + targetViewBOs.size());
-            log.debug("targetViewBOs=" + targetViewBOs);*/
+            log.debug("columnCount=" + targetViewBOs.size());
+            log.debug("targetViewBOs=" + targetViewBOs);
             String columnNames = targetViewBOs.stream().map(TargetViewBO::getColumnName).collect(Collectors.joining(","));
             colomnSQL.append("(").append(columnNames).append(")").append("VALUES");
             StringBuilder valueSQL = new StringBuilder();
@@ -74,7 +74,7 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
                 intallSB(resultMap, targetViewBOs, valueSQL, valueSQLTemp);
             }
             String insertSQL = colomnSQL.append(valueSQL).toString();
-            /* log.debug("insertSQL=" + insertSQL);*/
+            log.debug("insertSQL=" + insertSQL);
             Map<String, String> excuteSQLMap = new HashMap<>();
             excuteSQLMap.put("sql", insertSQL);
             checkResultMapper.selectTableStruct(excuteSQLMap);
@@ -284,9 +284,4 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
     public void setCheckResultMapper(CheckResultMapper checkResultMapper) {
         this.checkResultMapper = checkResultMapper;
     }
-
-    public void setClickHouseConfig(ClickHouseConfig clickHouseConfig) {
-        this.clickHouseConfig = clickHouseConfig;
-    }
-
 }
