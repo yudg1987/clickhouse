@@ -162,10 +162,10 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
 					}
 					else {
 						if (dataType == Types.DATE) {// DATE类型
-							valueSQLTemp.append("toDate('" + myDateFmt.format(value) + "')");
+							valueSQLTemp.append("toDate('" + value + "')");
 						}
 						else if (dataType == Types.TIME || dataType == Types.TIMESTAMP) {// timestamp datetime
-							valueSQLTemp.append("toDateTime('" + myFmt.format(value) + "')");
+							valueSQLTemp.append("toDateTime('" + value + "')");
 						}
 						else if (dataType == Types.INTEGER || dataType == Types.FLOAT || dataType == Types.BIGINT || dataType == Types.BIT || dataType == Types.DOUBLE || dataType == Types.DOUBLE) {// Int64
 							valueSQLTemp.append(value);
@@ -198,7 +198,7 @@ public class ClickHouseBusiServiceImpl implements IClickHouseBusiService {
 	}
 
 	public static void main(String[] args) throws Exception {
-		ClickHouseBusiServiceImpl impl = new ClickHouseBusiServiceImpl();
+		/*ClickHouseBusiServiceImpl impl = new ClickHouseBusiServiceImpl();*/
 		/* ExecCompareTaskReqBO execCompareTaskReqBO = new ExecCompareTaskReqBO(); */
 		/*
 		 * StringBuilder sql = new StringBuilder(
