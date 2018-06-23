@@ -4,15 +4,62 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
     http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="clickHouseSource" class="com.alibaba.druid.pool.DruidDataSource"
+    <bean id="clickHouseSource1" class="com.alibaba.druid.pool.DruidDataSource"
           init-method="init" destroy-method="close">
         <property name="driverClassName" value="ru.yandex.clickhouse.ClickHouseDriver"/>
         <!-- 基本属性 url、user、password -->
-        <property name="url" value="${com.ohaotian.clickhouse.dataSourceUrl}"/>
-        <property name="username" value="${com.ohaotian.clickhouse.user}"/>
-        <property name="password" value="${com.ohaotian.clickhouse.password}"/>
+        <property name="url" value="${com.ohaotian.clickhouse.dataSourceUrl1}"/>
+        <property name="username" value="${com.ohaotian.clickhouse.user1}"/>
+        <property name="password" value="${com.ohaotian.clickhouse.password1}"/>
         <!-- maxWait 获取连接等待超时的时间 -->
-        <property name="maxWait" value="${com.ohaotian.clickhouse.connectionTimeout}"/>
+        <property name="maxWait" value="${com.ohaotian.clickhouse.connectionTimeout1}"/>
+    </bean>
+
+    <bean id="clickHouseSource2" class="com.alibaba.druid.pool.DruidDataSource"
+          init-method="init" destroy-method="close">
+        <property name="driverClassName" value="ru.yandex.clickhouse.ClickHouseDriver"/>
+        <!-- 基本属性 url、user、password -->
+        <property name="url" value="${com.ohaotian.clickhouse.dataSourceUrl2}"/>
+        <property name="username" value="${com.ohaotian.clickhouse.user2}"/>
+        <property name="password" value="${com.ohaotian.clickhouse.password2}"/>
+        <!-- maxWait 获取连接等待超时的时间 -->
+        <property name="maxWait" value="${com.ohaotian.clickhouse.connectionTimeout2}"/>
+    </bean>
+
+    <bean id="clickHouseSource3" class="com.alibaba.druid.pool.DruidDataSource"
+          init-method="init" destroy-method="close">
+        <property name="driverClassName" value="ru.yandex.clickhouse.ClickHouseDriver"/>
+        <!-- 基本属性 url、user、password -->
+        <property name="url" value="${com.ohaotian.clickhouse.dataSourceUrl3}"/>
+        <property name="username" value="${com.ohaotian.clickhouse.user3}"/>
+        <property name="password" value="${com.ohaotian.clickhouse.password3}"/>
+        <!-- maxWait 获取连接等待超时的时间 -->
+        <property name="maxWait" value="${com.ohaotian.clickhouse.connectionTimeout3}"/>
+    </bean>
+
+    <bean id="clickHouseSource4" class="com.alibaba.druid.pool.DruidDataSource"
+          init-method="init" destroy-method="close">
+        <property name="driverClassName" value="ru.yandex.clickhouse.ClickHouseDriver"/>
+        <!-- 基本属性 url、user、password -->
+        <property name="url" value="${com.ohaotian.clickhouse.dataSourceUrl4}"/>
+        <property name="username" value="${com.ohaotian.clickhouse.user4}"/>
+        <property name="password" value="${com.ohaotian.clickhouse.password4}"/>
+        <!-- maxWait 获取连接等待超时的时间 -->
+        <property name="maxWait" value="${com.ohaotian.clickhouse.connectionTimeout4}"/>
+    </bean>
+
+    <!-- 动态配置数据源 -->
+    <bean id="clickHouseSource" class="com.ohaotian.clickhouse.config.DynamicDataSource">
+        <property name="targetDataSources">
+            <map key-type="java.lang.String">
+                <entry value-ref="clickHouseSource1" key="clickHouseSource1"></entry>
+                <entry value-ref="clickHouseSource2" key="clickHouseSource2"></entry>
+                <entry value-ref="clickHouseSource3" key="clickHouseSource3"></entry>
+                <entry value-ref="clickHouseSource4" key="clickHouseSource4"></entry>
+            </map>
+        </property>
+        <property name="defaultTargetDataSource"
+                  ref="clickHouseSource1"></property>      <!-- 默认使用clickHouseSource1的数据源 -->
     </bean>
 
     <bean id="sqlSessionFactoryClickHouse" class="org.mybatis.spring.SqlSessionFactoryBean"
