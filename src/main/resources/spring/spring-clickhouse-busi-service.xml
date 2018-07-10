@@ -8,4 +8,7 @@
 	<bean id="iClickHouseBusiService" class="com.ohaotian.clickhouse.service.impl.ClickHouseBusiServiceImpl">
 		<property name="checkResultMapper" ref="checkResultMapper" />
 	</bean>
+	<bean id="createBaseTableService" class="com.ohaotian.clickhouse.service.impl.CreateBaseTableServiceImpl">
+		<property name="checkResultMapper" ref="checkResultMapper" />
+	</bean>
 </beans>

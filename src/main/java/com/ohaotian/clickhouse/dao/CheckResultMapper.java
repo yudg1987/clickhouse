@@ -10,5 +10,6 @@ public interface CheckResultMapper {
 
 	List<Map<String, Object>> selectSQLByPage(Page<QueryCheckResultReqBO> page, Map map);
 	List<Map<String, Object>> selectTableStruct(Map map);
+	String selectCurrentDataBase();
 
 }
