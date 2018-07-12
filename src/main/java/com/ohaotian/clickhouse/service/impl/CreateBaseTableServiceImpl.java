@@ -1,5 +1,6 @@
 package com.ohaotian.clickhouse.service.impl;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 
 	private CheckResultMapper	checkResultMapper;
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public CreateBaseTableRspBO createBaseTable(CreateBaseTableReqBO createBaseTableReqBO) {
 		CreateBaseTableRspBO createBaseTableRspBO = new CreateBaseTableRspBO();
@@ -39,11 +41,12 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 			log.debug("installCreateSql=" + installCreateSql);
 			log.debug("installCreateAllSql=" + installCreateAllSql);
 			Map<String, String> sqlMap = new HashMap<>();
+			Map<String, String> sqlMapALL = new HashMap<>();
 			sqlMap.put("sql", installCreateSql);
-			checkResultMapper.selectTableStruct(sqlMap);
+			sqlMapALL.put("sql", installCreateAllSql);
 
-			sqlMap.put("sql", installCreateAllSql);
 			checkResultMapper.selectTableStruct(sqlMap);
+			checkResultMapper.selectTableStruct(sqlMapALL);
 		}
 		catch (Exception e) {
 			createBaseTableRspBO.setRespCode("8888");
@@ -133,25 +136,23 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 		return createSql.toString();
 
 	}
-    /**
-     * 
-     * <br>
-     * 适用场景:创建对外表	<br>
-     * 调用方式:	<br>
-     * 业务逻辑说明<br>
-     *
-     * @param createBaseTableReqBO
-     * @param map
-     * @return
-     * @autho yudg
-     * @time 2018年7月10日 下午4:50:24
-     */
+
+	/** <br>
+	 * 适用场景:创建对外表 <br>
+	 * 调用方式: <br>
+	 * 业务逻辑说明<br>
+	 *
+	 * @param createBaseTableReqBO
+	 * @param map
+	 * @return
+	 * @autho yudg
+	 * @time 2018年7月10日 下午4:50:24 */
 	private String installCreateAllSql(CreateBaseTableReqBO createBaseTableReqBO, Map<String, String> map) {
 
 		StringBuilder createAllSql = new StringBuilder();
 
 		createAllSql.append("CREATE TABLE ").append(map.get("scheme")).append(".").append(createBaseTableReqBO.getTable_name()).append("_ALL \n").append(map.get("str")).append("\n")
-		        .append("ENGINE=Distributed(ck_cluster,").append("'"+map.get("scheme")+"','"+createBaseTableReqBO.getTable_name()+"',rand())");
+		        .append("ENGINE=Distributed(ck_cluster,").append("'" + map.get("scheme") + "','" + createBaseTableReqBO.getTable_name() + "',rand())");
 		return createAllSql.toString();
 
 	}
