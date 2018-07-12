@@ -87,7 +87,7 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 			is_must = tableColumnDefinitionBO.getIs_must();
 
 			str.append(column_code).append(" ");
-			if (is_must == null) {
+			if (is_must == 1) {
 				str.append(column_type);
 			}
 			else {
