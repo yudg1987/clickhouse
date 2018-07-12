@@ -150,9 +150,8 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 
 		StringBuilder createAllSql = new StringBuilder();
 
-		createAllSql.append("CREATE TABLE ").append(map.get("scheme")).append(".").append(createBaseTableReqBO.getTable_name()).append("_ALL \n").append(map.get("str")).append("\n)")
-		        .append(createBaseTableReqBO.getZookeeperInfo()).append("\n PARTITION BY ").append(map.get("distributedColumn")).append("ORDER BY (").append(map.get("primaryColumn"))
-		        .append(", notNullDate \n SETTINGS index_granularity = 8192");
+		createAllSql.append("CREATE TABLE ").append(map.get("scheme")).append(".").append(createBaseTableReqBO.getTable_name()).append("_ALL \n").append(map.get("str")).append("\n")
+		        .append("ENGINE=Distributed(ck_cluster,").append("'"+map.get("scheme")+"','"+createBaseTableReqBO.getTable_name()+"',rand())");
 		return createAllSql.toString();
 
 	}
