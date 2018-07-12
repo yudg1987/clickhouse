@@ -127,9 +127,9 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 
 		StringBuilder createSql = new StringBuilder();
 
-		createSql.append("CREATE TABLE ").append(map.get("scheme")).append(".").append(createBaseTableReqBO.getTable_name()).append("(\n").append(map.get("str")).append("\n)")
-		        .append(createBaseTableReqBO.getZookeeperInfo()).append("\n PARTITION BY ").append(map.get("distributedColumn")).append("ORDER BY (").append(map.get("primaryColumn"))
-		        .append(", notNullDate \n SETTINGS index_granularity = 8192");
+		createSql.append("CREATE TABLE ").append(map.get("scheme")).append(".").append(createBaseTableReqBO.getTable_name()).append("\n").append(map.get("str")).append("\n")
+		        .append(createBaseTableReqBO.getZookeeperInfo()).append("\n PARTITION BY ").append(map.get("distributedColumn")).append(" ORDER BY (").append(map.get("primaryColumn"))
+		        .append(", notNullDate) \n SETTINGS index_granularity = 8192");
 		return createSql.toString();
 
 	}
