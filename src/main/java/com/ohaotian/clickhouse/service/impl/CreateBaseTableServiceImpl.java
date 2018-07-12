@@ -1,6 +1,5 @@
 package com.ohaotian.clickhouse.service.impl;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
