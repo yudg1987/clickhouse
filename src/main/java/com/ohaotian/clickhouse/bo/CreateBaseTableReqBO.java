@@ -21,7 +21,9 @@ public class CreateBaseTableReqBO extends ReqInfoBO implements Serializable {
 	private String						  oper_no;
 	private Date						  create_time;
 	private String						  remark;
-	private String zookeeperInfo;
+	/*private String zookeeperInfo;*/
+	/**是否是创建历史表 1：是 0：否**/
+	private Integer isHisTable=0;
 	private List<TableColumnDefinitionBO> columns;
 
 }

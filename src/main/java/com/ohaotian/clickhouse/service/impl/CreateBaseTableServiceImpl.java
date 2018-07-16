@@ -3,6 +3,7 @@ package com.ohaotian.clickhouse.service.impl;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import com.ohaotian.clickhouse.bo.CreateBaseTableReqBO;
 import com.ohaotian.clickhouse.bo.CreateBaseTableRspBO;
 import com.ohaotian.clickhouse.bo.TableColumnDefinitionBO;
+import com.ohaotian.clickhouse.config.DataSourceContextHolder;
+import com.ohaotian.clickhouse.config.DataSourceType;
 import com.ohaotian.clickhouse.dao.CheckResultMapper;
 import com.ohaotian.clickhouse.service.CreateBaseTableService;
 
@@ -25,6 +28,10 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 	private static final Logger	log	= LoggerFactory.getLogger(CreateBaseTableServiceImpl.class);
 
 	private CheckResultMapper	checkResultMapper;
+	private Properties			prop;
+	static {
+		DataSourceContextHolder.setDbType(DataSourceType.CLICKHOUSESOURCE1);
+	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
@@ -33,10 +40,13 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 		createBaseTableRspBO.setRespCode("0000");
 		createBaseTableRspBO.setRespDesc("成功!");
 		try {
+
+			Map<String, String> systemMap = getPropConfig(createBaseTableReqBO);
+
 			Map<String, String> map = installColumn(createBaseTableReqBO);
 
-			String installCreateSql = installCreateSql(createBaseTableReqBO, map);
-			String installCreateAllSql = installCreateAllSql(createBaseTableReqBO, map);
+			String installCreateSql = installCreateSql(createBaseTableReqBO, map, systemMap);
+			String installCreateAllSql = installCreateAllSql(createBaseTableReqBO, map, systemMap);
 			log.debug("installCreateSql=" + installCreateSql);
 			log.debug("installCreateAllSql=" + installCreateAllSql);
 			Map<String, String> sqlMap = new HashMap<>();
@@ -55,6 +65,28 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 		return createBaseTableRspBO;
 	}
 
+	private Map<String, String> getPropConfig(CreateBaseTableReqBO createBaseTableReqBO) {
+		Map<String, String> map = new HashMap<>();
+		String scheme = checkResultMapper.selectCurrentDataBase();
+		String source = DataSourceContextHolder.getDbType();
+		String keySource = "cluster.${source}.zookeeper";
+		keySource = keySource.replace("${source}", source);
+
+		String keyFuben = "cluster.${source}.fuben";
+		keyFuben = keyFuben.replace("${source}", source);
+
+		String fuben = prop.getProperty(keyFuben);
+
+		String zookeeper = prop.getProperty(keySource).replace("${database}", scheme).replace("${tableName}", createBaseTableReqBO.getTable_name()).replace("${fuben}", fuben);
+
+		String clusterName = prop.getProperty("cluster.name");
+
+		map.put("zookeeper", zookeeper);
+		map.put("clusterName", clusterName);
+		return map;
+
+	}
+
 	/** <br>
 	 * 适用场景: 组装字段<br>
 	 * 调用方式: <br>
@@ -64,9 +96,14 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 	 * @autho yudg
 	 * @time 2018年7月10日 下午4:19:08 */
 	private Map<String, String> installColumn(CreateBaseTableReqBO createBaseTableReqBO) {
-		if (null == createBaseTableReqBO.getZookeeperInfo()) {
-			throw new IllegalArgumentException("未定义zookeeper节点信息！");
+		String scheme = checkResultMapper.selectCurrentDataBase();
+		Integer cnt = checkResultMapper.selectIsExist(createBaseTableReqBO.getTable_name(), scheme);
+		if (null != cnt && cnt.intValue() > 0) {
+			throw new IllegalArgumentException("表已存在！");
 		}
+		/*
+		 * if (null == createBaseTableReqBO.getZookeeperInfo()) { throw new IllegalArgumentException("未定义zookeeper节点信息！"); }
+		 */
 		Map<String, String> map = new HashMap<>();
 
 		List<TableColumnDefinitionBO> columns = createBaseTableReqBO.getColumns();
@@ -87,22 +124,22 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 			is_must = tableColumnDefinitionBO.getIs_must();
 
 			str.append(column_code).append(" ");
-			if (is_must == 1) {
+			if (null != is_must && 1 == is_must) {
 				str.append(column_type);
 			}
 			else {
 				str.append("Nullable(").append(column_type).append(")");
 			}
 			str.append(",\n");
-			if (1 == is_distributed) {
+			if (null != is_distributed && 1 == is_distributed) {
 				distributedColumn = column_code;
 			}
-			if (1 == isPrimary) {
+			if (null != isPrimary && 1 == isPrimary) {
 				primaryColumn = column_code;
 			}
 		}
 		str.append("notNullDate Date Default now(),\n versionDateTime DateTime Default now() )");
-		if (null == distributedColumn) {
+		if (null == distributedColumn && 0 == createBaseTableReqBO.getIsHisTable()) {
 			throw new IllegalArgumentException("未定义分区字段！");
 		}
 		if (null == primaryColumn) {
@@ -111,7 +148,6 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 		map.put("str", str.toString());
 		map.put("distributedColumn", distributedColumn);
 		map.put("primaryColumn", primaryColumn);
-		String scheme = checkResultMapper.selectCurrentDataBase();
 		map.put("scheme", scheme);
 		return map;
 	}
@@ -125,13 +161,19 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 	 * @return
 	 * @autho yudg
 	 * @time 2018年7月10日 下午4:14:46 */
-	private String installCreateSql(CreateBaseTableReqBO createBaseTableReqBO, Map<String, String> map) {
+	private String installCreateSql(CreateBaseTableReqBO createBaseTableReqBO, Map<String, String> map, Map<String, String> systemMap) {
 
 		StringBuilder createSql = new StringBuilder();
 
 		createSql.append("CREATE TABLE ").append(map.get("scheme")).append(".").append(createBaseTableReqBO.getTable_name()).append("\n").append(map.get("str")).append("\n")
-		        .append(createBaseTableReqBO.getZookeeperInfo()).append("\n PARTITION BY ").append(map.get("distributedColumn")).append(" ORDER BY (").append(map.get("primaryColumn"))
-		        .append(", notNullDate) \n SETTINGS index_granularity = 8192");
+		        .append(systemMap.get("zookeeper")).append("\n PARTITION BY ");
+		if (null != createBaseTableReqBO.getIsHisTable() && 1 == createBaseTableReqBO.getIsHisTable()) {
+			createSql.append("notNullDate");
+		}
+		else {
+			createSql.append(map.get("distributedColumn"));
+		}
+		createSql.append(" ORDER BY (").append(map.get("primaryColumn")).append(", notNullDate) \n SETTINGS index_granularity = 8192");
 		return createSql.toString();
 
 	}
@@ -146,18 +188,22 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 	 * @return
 	 * @autho yudg
 	 * @time 2018年7月10日 下午4:50:24 */
-	private String installCreateAllSql(CreateBaseTableReqBO createBaseTableReqBO, Map<String, String> map) {
+	private String installCreateAllSql(CreateBaseTableReqBO createBaseTableReqBO, Map<String, String> map, Map<String, String> systemMap) {
 
 		StringBuilder createAllSql = new StringBuilder();
 
 		createAllSql.append("CREATE TABLE ").append(map.get("scheme")).append(".").append(createBaseTableReqBO.getTable_name()).append("_ALL \n").append(map.get("str")).append("\n")
-		        .append("ENGINE=Distributed(ck_cluster,").append("'" + map.get("scheme") + "','" + createBaseTableReqBO.getTable_name() + "',rand())");
+		        .append("ENGINE=Distributed(" + systemMap.get("clusterName") + ",").append("'" + map.get("scheme") + "','" + createBaseTableReqBO.getTable_name() + "',rand())");
 		return createAllSql.toString();
 
 	}
 
 	public void setCheckResultMapper(CheckResultMapper checkResultMapper) {
 		this.checkResultMapper = checkResultMapper;
+	}
+
+	public void setProp(Properties prop) {
+		this.prop = prop;
 	}
 
 }

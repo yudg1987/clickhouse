@@ -12,5 +12,8 @@
 	<select id="selectCurrentDataBase" resultType="String">
 		select currentDatabase()
 	</select>
+	<select id="selectIsExist" resultType="Integer">
+		select  count(1) from  system.tables where name=#{0} and database=#{1}
+	</select>
 
 </mapper>

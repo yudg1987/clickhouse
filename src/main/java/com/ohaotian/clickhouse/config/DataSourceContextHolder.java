@@ -14,7 +14,11 @@ public class DataSourceContextHolder {
 	}
 
 	public static String getDbType() {
-		return ((String) contextHolder.get());
+		String source= ((String) contextHolder.get());
+		if (source == null) {  
+			source = DataSourceType.CLICKHOUSESOURCE1;// 默认是读写库  
+        }  
+		return source;
 	}
 
 	public static void clearDbType() {

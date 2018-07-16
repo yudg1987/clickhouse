@@ -10,5 +10,6 @@
 	</bean>
 	<bean id="createBaseTableService" class="com.ohaotian.clickhouse.service.impl.CreateBaseTableServiceImpl">
 		<property name="checkResultMapper" ref="checkResultMapper" />
+		<property name="prop" ref="propertyConfigurer" />
 	</bean>
 </beans>
