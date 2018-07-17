@@ -59,9 +59,8 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 		}
 		catch (Exception e) {
 			createBaseTableRspBO.setRespCode("8888");
-			createBaseTableRspBO.setRespDesc(e.getMessage());
+			createBaseTableRspBO.setRespDesc(e.getLocalizedMessage());
 		}
-
 		return createBaseTableRspBO;
 	}
 
