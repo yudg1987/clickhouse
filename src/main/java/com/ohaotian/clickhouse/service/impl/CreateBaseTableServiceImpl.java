@@ -43,7 +43,7 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
             for(int i=0;i<sourceArray.length;i++){
             	String sourceName=sourceArray[i];
             	DataSourceContextHolder.setDbType(sourceName);
-            	Map<String, String> systemMap = getPropConfig(createBaseTableReqBO);
+            	Map<String, String> systemMap = getPropConfig(createBaseTableReqBO,sourceName);
 
     			Map<String, String> map = installColumn(createBaseTableReqBO);
 
@@ -68,10 +68,9 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 		return createBaseTableRspBO;
 	}
 
-	private Map<String, String> getPropConfig(CreateBaseTableReqBO createBaseTableReqBO) {
+	private Map<String, String> getPropConfig(CreateBaseTableReqBO createBaseTableReqBO,String source) {
 		Map<String, String> map = new HashMap<>();
 		String scheme = checkResultMapper.selectCurrentDataBase();
-		String source = DataSourceContextHolder.getDbType();
 		String keySource = "cluster.${source}.zookeeper";
 		keySource = keySource.replace("${source}", source);
 
