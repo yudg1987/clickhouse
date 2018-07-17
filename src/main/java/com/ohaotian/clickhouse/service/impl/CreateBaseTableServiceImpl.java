@@ -12,7 +12,6 @@ import com.ohaotian.clickhouse.bo.CreateBaseTableReqBO;
 import com.ohaotian.clickhouse.bo.CreateBaseTableRspBO;
 import com.ohaotian.clickhouse.bo.TableColumnDefinitionBO;
 import com.ohaotian.clickhouse.config.DataSourceContextHolder;
-import com.ohaotian.clickhouse.config.DataSourceType;
 import com.ohaotian.clickhouse.dao.CheckResultMapper;
 import com.ohaotian.clickhouse.service.CreateBaseTableService;
 
@@ -29,33 +28,38 @@ public class CreateBaseTableServiceImpl implements CreateBaseTableService {
 
 	private CheckResultMapper	checkResultMapper;
 	private Properties			prop;
-	static {
+	/*static {
 		DataSourceContextHolder.setDbType(DataSourceType.CLICKHOUSESOURCE1);
-	}
+	}*/
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public CreateBaseTableRspBO createBaseTable(CreateBaseTableReqBO createBaseTableReqBO) {
 		CreateBaseTableRspBO createBaseTableRspBO = new CreateBaseTableRspBO();
 		createBaseTableRspBO.setRespCode("0000");
 		createBaseTableRspBO.setRespDesc("成功!");
 		try {
+            String[] sourceArray=prop.getProperty("cluster.sources").split(",");
+            
+            for(int i=0;i<sourceArray.length;i++){
+            	String sourceName=sourceArray[i];
+            	DataSourceContextHolder.setDbType(sourceName);
+            	Map<String, String> systemMap = getPropConfig(createBaseTableReqBO);
 
-			Map<String, String> systemMap = getPropConfig(createBaseTableReqBO);
+    			Map<String, String> map = installColumn(createBaseTableReqBO);
 
-			Map<String, String> map = installColumn(createBaseTableReqBO);
+    			String installCreateSql = installCreateSql(createBaseTableReqBO, map, systemMap);
+    			String installCreateAllSql = installCreateAllSql(createBaseTableReqBO, map, systemMap);
+    			log.debug("installCreateSql=" + installCreateSql);
+    			log.debug("installCreateAllSql=" + installCreateAllSql);
+    			Map<String, String> sqlMap = new HashMap<>();
+    			Map<String, String> sqlMapALL = new HashMap<>();
+    			sqlMap.put("sql", installCreateSql);
+    			sqlMapALL.put("sql", installCreateAllSql);
 
-			String installCreateSql = installCreateSql(createBaseTableReqBO, map, systemMap);
-			String installCreateAllSql = installCreateAllSql(createBaseTableReqBO, map, systemMap);
-			log.debug("installCreateSql=" + installCreateSql);
-			log.debug("installCreateAllSql=" + installCreateAllSql);
-			Map<String, String> sqlMap = new HashMap<>();
-			Map<String, String> sqlMapALL = new HashMap<>();
-			sqlMap.put("sql", installCreateSql);
-			sqlMapALL.put("sql", installCreateAllSql);
-
-			checkResultMapper.selectTableStruct(sqlMap);
-			checkResultMapper.selectTableStruct(sqlMapALL);
+    			checkResultMapper.selectTableStruct(sqlMap);
+    			checkResultMapper.selectTableStruct(sqlMapALL);
+            }
+			
 		}
 		catch (Exception e) {
 			createBaseTableRspBO.setRespCode("8888");
